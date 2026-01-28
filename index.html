@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奧特曼數學大挑戰</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            /* 設定字型：英數優先 Arial，中文優先新細明體 */
+            font-family: Arial, "PMingLiU", "新細明體", "Microsoft JhengHei", sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        .game-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 2rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 600px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            border: 8px solid #ef4444;
+        }
+        .ultraman-avatar {
+            width: 120px;
+            height: 120px;
+            margin: -80px auto 20px;
+            background: #fff;
+            border-radius: 50%;
+            border: 5px solid #ef4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        /* 強制數字與題目區域使用 Arial 以符合您的需求 */
+        #question-area, #answer-input, .number-btn, #score-display, #final-score {
+            font-family: Arial, sans-serif;
+        }
+        .star-particle {
+            position: absolute;
+            pointer-events: none;
+            animation: fly 1s ease-out forwards;
+        }
+        @keyframes fly {
+            0% { transform: translate(0,0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+        }
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .number-btn {
+            transition: all 0.2s;
+        }
+        .number-btn:active {
+            transform: scale(0.9);
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-card" id="game-container">
+    <div class="ultraman-avatar" id="avatar">🦸</div>
+    
+    <div id="start-screen">
+        <h1 class="text-4xl font-bold text-red-600 mb-6">奧特曼數學大挑戰</h1>
+        <p class="text-gray-600 mb-8 text-xl">保衛地球，從小精通數學！</p>
+        <div class="space-y-4">
+            <button onclick="startGame('sequence')" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-2xl py-4 rounded-xl shadow-lg transition">
+                挑戰 1-30 數列 🔢
+            </button>
+            <button onclick="startGame('arithmetic')" class="w-full bg-red-600 hover:bg-red-700 text-white text-2xl py-4 rounded-xl shadow-lg transition">
+                1-10 加減法運算 ➕
+            </button>
+        </div>
+    </div>
+
+    <div id="game-screen" class="hidden">
+        <div class="flex justify-between items-center mb-6">
+            <span id="score-display" class="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full font-bold">Score: 0</span>
+            <button onclick="showMenu()" class="text-gray-400 hover:text-red-500">❌ 結束遊戲</button>
+        </div>
+
+        <div id="question-area" class="text-5xl font-bold text-blue-900 mb-10 h-24 flex items-center justify-center tracking-widest">
+            <!-- 題目內容 -->
+        </div>
+
+        <div class="mb-8">
+            <input type="number" id="answer-input" 
+                   class="w-32 text-center text-4xl border-b-4 border-blue-500 outline-none bg-transparent text-red-600 font-bold"
+                   placeholder="?" autocomplete="off">
+        </div>
+
+        <!-- 虛擬數字鍵盤 -->
+        <div class="grid grid-cols-5 gap-2 mb-4">
+            <button onclick="pressKey(1)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">1</button>
+            <button onclick="pressKey(2)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">2</button>
+            <button onclick="pressKey(3)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">3</button>
+            <button onclick="pressKey(4)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">4</button>
+            <button onclick="pressKey(5)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">5</button>
+            <button onclick="pressKey(6)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">6</button>
+            <button onclick="pressKey(7)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">7</button>
+            <button onclick="pressKey(8)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">8</button>
+            <button onclick="pressKey(9)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">9</button>
+            <button onclick="pressKey(0)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">0</button>
+        </div>
+
+        <button onclick="checkAnswer()" class="w-full bg-green-500 hover:bg-green-600 text-white text-2xl py-3 rounded-xl shadow-lg transition">
+            發射斯派修姆光線！💥 (Enter)
+        </button>
+
+        <div id="feedback" class="mt-4 h-8 font-bold text-xl"></div>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h2 class="text-3xl font-bold text-red-600 mb-4">挑戰結束！</h2>
+        <div class="text-6xl mb-4">🏆</div>
+        <p class="text-2xl mb-6 font-bold">總分: <span id="final-score">0</span></p>
+        <button onclick="showMenu()" class="w-full bg-blue-600 text-white py-3 rounded-xl text-xl">返回主畫面</button>
+    </div>
+</div>
+
+<script>
+    let currentMode = '';
+    let currentAnswer = 0;
+    let score = 0;
+    let questionCount = 0;
+    const maxQuestions = 10;
+
+    const gameContainer = document.getElementById('game-container');
+    const startScreen = document.getElementById('start-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const questionArea = document.getElementById('question-area');
+    const answerInput = document.getElementById('answer-input');
+    const scoreDisplay = document.getElementById('score-display');
+    const finalScoreDisplay = document.getElementById('final-score');
+    const feedback = document.getElementById('feedback');
+    const avatar = document.getElementById('avatar');
+
+    function startGame(mode) {
+        currentMode = mode;
+        score = 0;
+        questionCount = 0;
+        updateScore();
+        startScreen.classList.add('hidden');
+        resultScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        nextQuestion();
+        answerInput.focus();
+    }
+
+    function showMenu() {
+        startScreen.classList.remove('hidden');
+        gameScreen.classList.add('hidden');
+        resultScreen.classList.add('hidden');
+        avatar.innerText = "🦸";
+    }
+
+    function nextQuestion() {
+        if (questionCount >= maxQuestions) {
+            endGame();
+            return;
+        }
+        questionCount++;
+        answerInput.value = '';
+        feedback.innerText = '';
+        avatar.innerText = "🤔";
+        if (currentMode === 'sequence') {
+            generateSequenceQuestion();
+        } else {
+            generateArithmeticQuestion();
+        }
+    }
+
+    function generateSequenceQuestion() {
+        const startNum = Math.floor(Math.random() * 27) + 1;
+        const missingIndex = Math.floor(Math.random() * 3);
+        let seq = [startNum, startNum + 1, startNum + 2];
+        currentAnswer = seq[missingIndex];
+        let displaySeq = seq.map((num, idx) => idx === missingIndex ? "__" : num);
+        questionArea.innerText = displaySeq.join(", ");
+    }
+
+    function generateArithmeticQuestion() {
+        const isPlus = Math.random() > 0.5;
+        let a, b;
+        if (isPlus) {
+            a = Math.floor(Math.random() * 6) + 1;
+            b = Math.floor(Math.random() * 4) + 1;
+            currentAnswer = a + b;
+            questionArea.innerText = `${a} + ${b} = ?`;
+        } else {
+            a = Math.floor(Math.random() * 6) + 5;
+            b = Math.floor(Math.random() * a) + 1;
+            currentAnswer = a - b;
+            questionArea.innerText = `${a} - ${b} = ?`;
+        }
+    }
+
+    function checkAnswer() {
+        const userAns = parseInt(answerInput.value);
+        if (isNaN(userAns)) return;
+        if (userAns === currentAnswer) {
+            score += 10;
+            updateScore();
+            avatar.innerText = "🤩";
+            feedback.innerText = "太棒了！斯派修姆光線！💥";
+            feedback.className = "mt-4 h-8 font-bold text-xl text-green-600";
+            createStars();
+            setTimeout(nextQuestion, 1200);
+        } else {
+            avatar.innerText = "😵";
+            feedback.innerText = "再試一次！加油！💪";
+            feedback.className = "mt-4 h-8 font-bold text-xl text-red-500";
+            gameContainer.classList.add('shake');
+            setTimeout(() => gameContainer.classList.remove('shake'), 500);
+            answerInput.value = '';
+            answerInput.focus();
+        }
+    }
+
+    function updateScore() {
+        scoreDisplay.innerText = `Score: ${score}`;
+    }
+
+    function endGame() {
+        gameScreen.classList.add('hidden');
+        resultScreen.classList.remove('hidden');
+        finalScoreDisplay.innerText = score;
+        avatar.innerText = "👑";
+    }
+
+    answerInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    });
+
+    function pressKey(num) {
+        answerInput.value += num;
+        answerInput.focus();
+    }
+
+    function createStars() {
+        for (let i = 0; i < 15; i++) {
+            const star = document.createElement('div');
+            star.innerText = "⭐";
+            star.className = "star-particle";
+            const dx = (Math.random() - 0.5) * 400 + "px";
+            const dy = (Math.random() - 0.5) * 400 + "px";
+            star.style.setProperty('--dx', dx);
+            star.style.setProperty('--dy', dy);
+            star.style.left = "50%";
+            star.style.top = "50%";
+            gameContainer.appendChild(star);
+            setTimeout(() => star.remove(), 1000);
+        }
+    }
+</script>
+
+</body>
+</html>
