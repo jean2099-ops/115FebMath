@@ -2,12 +2,11 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>奧特曼數學大挑戰</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            /* 設定字型：英數優先 Arial，中文優先新細明體 */
             font-family: Arial, "PMingLiU", "新細明體", "Microsoft JhengHei", sans-serif;
             background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
             min-height: 100vh;
@@ -18,57 +17,99 @@
             overflow: hidden;
             touch-action: manipulation;
         }
+
         .game-card {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 2rem;
             box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-            width: 90%;
-            max-width: 600px;
-            padding: 2rem;
+            width: 95vw;
+            max-width: 800px;
+            max-height: 95vh;
+            padding: 1.5rem;
             text-align: center;
             position: relative;
-            border: 8px solid #ef4444;
+            border: 6px solid #ef4444;
+            overflow-y: auto;
         }
+
+        /* iPad Mini 橫式優化 */
+        @media (orientation: landscape) and (max-height: 600px) {
+            .game-card {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 20px;
+                padding: 1rem;
+            }
+            .ultraman-avatar {
+                width: 80px !important;
+                height: 80px !important;
+                margin: 0 !important;
+                font-size: 40px !important;
+            }
+            #start-screen h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+            .game-content { flex: 1; }
+            .input-section { margin-bottom: 0.5rem !important; }
+            .keyboard-grid { margin-bottom: 0 !important; }
+        }
+
         .ultraman-avatar {
-            width: 120px;
-            height: 120px;
-            margin: -80px auto 20px;
+            width: 100px;
+            height: 100px;
+            margin: -60px auto 15px;
             background: #fff;
             border-radius: 50%;
             border: 5px solid #ef4444;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 60px;
+            font-size: 50px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
-        /* 強制數字與題目區域使用 Arial 以符合您的需求 */
+
         #question-area, #answer-input, .number-btn, #score-display, #final-score {
             font-family: Arial, sans-serif;
         }
+
+        /* 隱藏數字輸入框的箭頭 */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .number-btn {
+            transition: all 0.1s;
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            touch-action: manipulation;
+        }
+
+        .number-btn:active {
+            background: #d1d5db;
+            transform: scale(0.95);
+        }
+
         .star-particle {
             position: absolute;
             pointer-events: none;
             animation: fly 1s ease-out forwards;
         }
+
         @keyframes fly {
             0% { transform: translate(0,0) scale(1); opacity: 1; }
             100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
         }
+
         .shake {
             animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
         }
+
         @keyframes shake {
             10%, 90% { transform: translate3d(-1px, 0, 0); }
             20%, 80% { transform: translate3d(2px, 0, 0); }
             30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
             40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-        .number-btn {
-            transition: all 0.2s;
-        }
-        .number-btn:active {
-            transform: scale(0.9);
         }
     </style>
 </head>
@@ -77,61 +118,68 @@
 <div class="game-card" id="game-container">
     <div class="ultraman-avatar" id="avatar">🦸</div>
     
-    <div id="start-screen">
-        <h1 class="text-4xl font-bold text-red-600 mb-6">奧特曼數學大挑戰</h1>
-        <p class="text-gray-600 mb-8 text-xl">保衛地球，從小精通數學！</p>
-        <div class="space-y-4">
-            <button onclick="startGame('sequence')" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-2xl py-4 rounded-xl shadow-lg transition">
-                挑戰 1-30 數列 🔢
+    <!-- 開始畫面 -->
+    <div id="start-screen" class="w-full">
+        <h1 class="text-3xl font-bold text-red-600 mb-4">奧特曼數學大挑戰</h1>
+        <p class="text-gray-600 mb-6 text-lg">準備好保衛地球了嗎？</p>
+        <div class="grid grid-cols-1 gap-4 max-w-sm mx-auto">
+            <button onclick="startGame('sequence')" class="bg-blue-600 hover:bg-blue-700 text-white text-xl py-4 rounded-xl shadow-lg transition">
+                1-30 數列挑戰 🔢
             </button>
-            <button onclick="startGame('arithmetic')" class="w-full bg-red-600 hover:bg-red-700 text-white text-2xl py-4 rounded-xl shadow-lg transition">
-                1-10 加減法運算 ➕
+            <button onclick="startGame('arithmetic')" class="bg-red-600 hover:bg-red-700 text-white text-xl py-4 rounded-xl shadow-lg transition">
+                1-10 加減法挑戰 ➕
             </button>
         </div>
     </div>
 
-    <div id="game-screen" class="hidden">
-        <div class="flex justify-between items-center mb-6">
+    <!-- 遊戲畫面 -->
+    <div id="game-screen" class="hidden w-full game-content">
+        <div class="flex justify-between items-center mb-4">
             <span id="score-display" class="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full font-bold">Score: 0</span>
-            <button onclick="showMenu()" class="text-gray-400 hover:text-red-500">❌ 結束遊戲</button>
+            <button onclick="showMenu()" class="text-gray-400 hover:text-red-500 font-bold text-sm">❌ 退出</button>
         </div>
 
-        <div id="question-area" class="text-5xl font-bold text-blue-900 mb-10 h-24 flex items-center justify-center tracking-widest">
+        <div id="question-area" class="text-4xl md:text-5xl font-bold text-blue-900 mb-6 h-16 flex items-center justify-center tracking-widest">
             <!-- 題目內容 -->
         </div>
 
-        <div class="mb-8">
-            <input type="number" id="answer-input" 
-                   class="w-32 text-center text-4xl border-b-4 border-blue-500 outline-none bg-transparent text-red-600 font-bold"
+        <div class="input-section mb-6">
+            <!-- 設為 readonly 以防止 iPad 彈出鍵盤 -->
+            <input type="text" id="answer-input" readonly
+                   class="w-full max-w-[200px] text-center text-4xl border-b-4 border-blue-500 outline-none bg-blue-50 text-red-600 font-bold rounded-t-lg"
                    placeholder="?" autocomplete="off">
         </div>
 
-        <!-- 虛擬數字鍵盤 -->
-        <div class="grid grid-cols-5 gap-2 mb-4">
-            <button onclick="pressKey(1)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">1</button>
-            <button onclick="pressKey(2)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">2</button>
-            <button onclick="pressKey(3)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">3</button>
-            <button onclick="pressKey(4)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">4</button>
-            <button onclick="pressKey(5)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">5</button>
-            <button onclick="pressKey(6)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">6</button>
-            <button onclick="pressKey(7)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">7</button>
-            <button onclick="pressKey(8)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">8</button>
-            <button onclick="pressKey(9)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">9</button>
-            <button onclick="pressKey(0)" class="number-btn bg-gray-100 p-3 rounded-lg text-xl font-bold">0</button>
+        <!-- 虛擬數字鍵盤 - 加大間隔與尺寸適合觸控 -->
+        <div class="keyboard-grid grid grid-cols-5 gap-3 mb-6">
+            <button onclick="pressKey('1')" class="number-btn py-4 rounded-xl text-2xl font-bold">1</button>
+            <button onclick="pressKey('2')" class="number-btn py-4 rounded-xl text-2xl font-bold">2</button>
+            <button onclick="pressKey('3')" class="number-btn py-4 rounded-xl text-2xl font-bold">3</button>
+            <button onclick="pressKey('4')" class="number-btn py-4 rounded-xl text-2xl font-bold">4</button>
+            <button onclick="pressKey('5')" class="number-btn py-4 rounded-xl text-2xl font-bold">5</button>
+            <button onclick="pressKey('6')" class="number-btn py-4 rounded-xl text-2xl font-bold">6</button>
+            <button onclick="pressKey('7')" class="number-btn py-4 rounded-xl text-2xl font-bold">7</button>
+            <button onclick="pressKey('8')" class="number-btn py-4 rounded-xl text-2xl font-bold">8</button>
+            <button onclick="pressKey('9')" class="number-btn py-4 rounded-xl text-2xl font-bold">9</button>
+            <button onclick="pressKey('0')" class="number-btn py-4 rounded-xl text-2xl font-bold">0</button>
         </div>
 
-        <button onclick="checkAnswer()" class="w-full bg-green-500 hover:bg-green-600 text-white text-2xl py-3 rounded-xl shadow-lg transition">
-            發射斯派修姆光線！💥 (Enter)
-        </button>
+        <div class="grid grid-cols-2 gap-4">
+            <button onclick="clearInput()" class="bg-gray-400 text-white text-lg py-3 rounded-xl font-bold">清除</button>
+            <button onclick="checkAnswer()" class="bg-green-500 hover:bg-green-600 text-white text-lg py-3 rounded-xl font-bold shadow-md">
+                確定答案 💥
+            </button>
+        </div>
 
-        <div id="feedback" class="mt-4 h-8 font-bold text-xl"></div>
+        <div id="feedback" class="mt-4 h-6 font-bold text-lg"></div>
     </div>
 
-    <div id="result-screen" class="hidden">
-        <h2 class="text-3xl font-bold text-red-600 mb-4">挑戰結束！</h2>
+    <!-- 結果畫面 -->
+    <div id="result-screen" class="hidden w-full">
+        <h2 class="text-3xl font-bold text-red-600 mb-4">挑戰成功！</h2>
         <div class="text-6xl mb-4">🏆</div>
-        <p class="text-2xl mb-6 font-bold">總分: <span id="final-score">0</span></p>
-        <button onclick="showMenu()" class="w-full bg-blue-600 text-white py-3 rounded-xl text-xl">返回主畫面</button>
+        <p class="text-2xl mb-6 font-bold text-blue-800">總分: <span id="final-score">0</span></p>
+        <button onclick="showMenu()" class="w-full max-w-xs mx-auto bg-blue-600 text-white py-4 rounded-xl text-xl font-bold">返回主選單</button>
     </div>
 </div>
 
@@ -162,7 +210,6 @@
         resultScreen.classList.add('hidden');
         gameScreen.classList.remove('hidden');
         nextQuestion();
-        answerInput.focus();
     }
 
     function showMenu() {
@@ -188,8 +235,9 @@
         }
     }
 
+    // 難度回到 1-30 數列
     function generateSequenceQuestion() {
-        const startNum = Math.floor(Math.random() * 27) + 1;
+        const startNum = Math.floor(Math.random() * 27) + 1; // 1 to 27
         const missingIndex = Math.floor(Math.random() * 3);
         let seq = [startNum, startNum + 1, startNum + 2];
         currentAnswer = seq[missingIndex];
@@ -197,41 +245,53 @@
         questionArea.innerText = displaySeq.join(", ");
     }
 
+    // 難度回到 1-10 加減法
     function generateArithmeticQuestion() {
         const isPlus = Math.random() > 0.5;
         let a, b;
         if (isPlus) {
-            a = Math.floor(Math.random() * 6) + 1;
-            b = Math.floor(Math.random() * 4) + 1;
-            currentAnswer = a + b;
+            a = Math.floor(Math.random() * 6) + 1; // 1-6
+            b = Math.floor(Math.random() * 4) + 1; // 1-4
+            currentAnswer = a + b; // Max 10
             questionArea.innerText = `${a} + ${b} = ?`;
         } else {
-            a = Math.floor(Math.random() * 6) + 5;
-            b = Math.floor(Math.random() * a) + 1;
+            a = Math.floor(Math.random() * 6) + 5; // 5-10
+            b = Math.floor(Math.random() * a) + 1; // 1 to a
             currentAnswer = a - b;
             questionArea.innerText = `${a} - ${b} = ?`;
         }
     }
 
+    function pressKey(num) {
+        // 限制輸入長度
+        if (answerInput.value.length < 3) {
+            answerInput.value += num;
+        }
+    }
+
+    function clearInput() {
+        answerInput.value = '';
+    }
+
     function checkAnswer() {
         const userAns = parseInt(answerInput.value);
         if (isNaN(userAns)) return;
+
         if (userAns === currentAnswer) {
             score += 10;
             updateScore();
             avatar.innerText = "🤩";
-            feedback.innerText = "太棒了！斯派修姆光線！💥";
-            feedback.className = "mt-4 h-8 font-bold text-xl text-green-600";
+            feedback.innerText = "正確！發射光線！💥";
+            feedback.className = "mt-4 h-6 font-bold text-lg text-green-600";
             createStars();
             setTimeout(nextQuestion, 1200);
         } else {
             avatar.innerText = "😵";
-            feedback.innerText = "再試一次！加油！💪";
-            feedback.className = "mt-4 h-8 font-bold text-xl text-red-500";
+            feedback.innerText = "再試一次喔！加油！💪";
+            feedback.className = "mt-4 h-6 font-bold text-lg text-red-500";
             gameContainer.classList.add('shake');
             setTimeout(() => gameContainer.classList.remove('shake'), 500);
             answerInput.value = '';
-            answerInput.focus();
         }
     }
 
@@ -246,16 +306,17 @@
         avatar.innerText = "👑";
     }
 
-    answerInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') checkAnswer();
+    // 鍵盤輔助 (如果仍接實體鍵盤)
+    window.addEventListener('keydown', (e) => {
+        if (!gameScreen.classList.contains('hidden')) {
+            if (e.key >= '0' && e.key <= '9') pressKey(e.key);
+            if (e.key === 'Backspace') clearInput();
+            if (e.key === 'Enter') checkAnswer();
+        }
     });
 
-    function pressKey(num) {
-        answerInput.value += num;
-        answerInput.focus();
-    }
-
     function createStars() {
+        const rect = gameContainer.getBoundingClientRect();
         for (let i = 0; i < 15; i++) {
             const star = document.createElement('div');
             star.innerText = "⭐";
