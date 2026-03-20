@@ -113,6 +113,7 @@
             <div class="side-info">
                 <div class="flex justify-between items-center mb-4 landscape:block">
                     <div class="text-center font-bold text-gray-500 text-sm mb-1" id="q-progress">進度: 0 / 20 題</div>
+                    <!-- 倒數計時與得分區域將根據模式隱藏 -->
                     <div id="timer-display" class="timer-badge mb-2">剩餘時間: 05:00</div>
                     <div id="score-display" class="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full font-bold text-center">Score: 0</div>
                     <button onclick="exitGame()" class="mt-2 text-gray-400 font-bold text-xs">❌ 退出</button>
@@ -164,9 +165,9 @@
     let target = '';
     let inputArr = [];
     let score = 0;
-    let questionsSolved = 0; // 當前作答題數 (不論對錯)
+    let questionsSolved = 0; 
     let timerInterval = null;
-    let timeLeft = 300; // 5 minutes in seconds
+    let timeLeft = 300; 
 
     const targetScore = 100;
     const pointsPerQuestion = 5;
@@ -204,18 +205,25 @@
         document.getElementById('math-menu').classList.add('hidden');
         document.getElementById('english-menu').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
-        document.getElementById('score-display').innerText = `Score: 0`;
         
         const isEnglish = (m === 'upper-to-lower' || m === 'lower-to-upper');
         document.getElementById('num-keyboard').classList.toggle('hidden', isEnglish);
         document.getElementById('letter-keyboard').classList.toggle('hidden', !isEnglish);
         
+        // 判斷是否顯示時間與分數
         const timerBadge = document.getElementById('timer-display');
+        const scoreBadge = document.getElementById('score-display');
+        
         if (m === 'subtraction-challenge') {
-            timerBadge.style.display = 'block';
+            // 減法模式下，後台跑計時，但不顯示計時器與分數
+            timerBadge.style.display = 'none';
+            scoreBadge.style.display = 'none';
             startTimer();
         } else {
+            // 其他模式維持原樣
             timerBadge.style.display = 'none';
+            scoreBadge.style.display = 'block';
+            scoreBadge.innerText = `Score: 0`;
         }
 
         if (isEnglish) updateLetterKeyboard(m === 'lower-to-upper');
@@ -224,21 +232,13 @@
     }
 
     function startTimer() {
-        updateTimerUI();
         timerInterval = setInterval(() => {
             timeLeft--;
-            updateTimerUI();
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
                 endGame(true);
             }
         }, 1000);
-    }
-
-    function updateTimerUI() {
-        const mins = Math.floor(timeLeft / 60);
-        const secs = timeLeft % 60;
-        document.getElementById('timer-display').innerText = `剩餘時間: ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
     function exitGame() {
@@ -247,7 +247,6 @@
     }
 
     function nextQuestion(isSkip = false) {
-        // 更新進度顯示
         if (mode === 'subtraction-challenge') {
             if (questionsSolved >= challengeMaxQuestions) {
                 endGame();
@@ -287,8 +286,8 @@
         else if(mode === 'subtraction-challenge') {
             let a, b, result;
             do {
-                a = Math.floor(Math.random() * 9) + 11; // 11 to 19
-                b = Math.floor(Math.random() * 9) + 1;  // 1 to 9
+                a = Math.floor(Math.random() * 9) + 11; 
+                b = Math.floor(Math.random() * 9) + 1;  
                 result = a - b;
             } while (result >= 10); 
 
@@ -332,7 +331,6 @@
         if(userAns === target) {
             score += pointsPerQuestion;
             document.getElementById('avatar').innerText = "🤩";
-            // 減法模式下不顯示 +5 文字提示與特效
             if (mode !== 'subtraction-challenge') {
                 document.getElementById('feedback').innerText = "正確！得分 +5 💥";
                 document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-green-600";
@@ -340,7 +338,6 @@
             }
         } else {
             document.getElementById('avatar').innerText = "😵";
-            // 減法模式下不顯示錯誤正確答案提示
             if (mode !== 'subtraction-challenge') {
                 document.getElementById('feedback').innerText = `可惜！正確答案是 ${target}`;
                 document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-red-500";
@@ -352,15 +349,21 @@
         questionsSolved++;
         document.getElementById('score-display').innerText = `Score: ${score}`;
 
-        // 在減法模式下，不論對錯均直接進入下一題或結算
-        const delay = mode === 'subtraction-challenge' ? 500 : 1200;
-        setTimeout(() => {
-            if (mode === 'subtraction-challenge' && questionsSolved >= challengeMaxQuestions) {
+        if (mode === 'subtraction-challenge') {
+            if (questionsSolved >= challengeMaxQuestions) {
                 endGame();
             } else {
                 nextQuestion();
             }
-        }, delay);
+        } else {
+            setTimeout(() => {
+                if (score >= targetScore) {
+                    endGame();
+                } else {
+                    nextQuestion();
+                }
+            }, 1200);
+        }
     }
 
     function createStars() {
