@@ -196,7 +196,6 @@
         document.getElementById('num-keyboard').classList.toggle('hidden', isEnglish);
         document.getElementById('letter-keyboard').classList.toggle('hidden', !isEnglish);
         
-        // 僅在後台跑計時，不顯示介面
         startTimer();
 
         if (isEnglish) updateLetterKeyboard(m === 'lower-to-upper');
@@ -300,8 +299,9 @@
     function checkAnswer() {
         if(inputArr.length === 0) return;
         let userAns = inputArr.join('');
+        let isCorrect = (userAns === target);
         
-        if(userAns === target) {
+        if(isCorrect) {
             score += pointsPerQuestion;
             document.getElementById('avatar').innerText = "🤩";
             if (mode !== 'subtraction-challenge') {
@@ -310,15 +310,27 @@
                 createStars();
             }
         } else {
-            document.getElementById('avatar').innerText = "😵";
-            if (mode !== 'subtraction-challenge') {
-                document.getElementById('feedback').innerText = `可惜！正確答案是 ${target}`;
-                document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-red-500";
-            }
+            // 刪除答錯時的所有效果（不改頭像、不顯示錯誤文字、不顯示正確答案）
+            document.getElementById('feedback').innerText = ""; 
         }
 
         questionsSolved++;
 
+        // 處理跳轉邏輯
+        if (isCorrect) {
+            // 正確時停留 1.2 秒讓使用者看鼓勵（減法挑戰除外）
+            if (mode === 'subtraction-challenge') {
+                checkEndCondition();
+            } else {
+                setTimeout(checkEndCondition, 1200);
+            }
+        } else {
+            // 錯誤時完全不等待，立即跳轉下一題
+            checkEndCondition();
+        }
+    }
+
+    function checkEndCondition() {
         if (mode === 'subtraction-challenge') {
             if (questionsSolved >= challengeMaxQuestions) {
                 endGame();
@@ -326,13 +338,11 @@
                 nextQuestion();
             }
         } else {
-            setTimeout(() => {
-                if (score >= targetScore) {
-                    endGame();
-                } else {
-                    nextQuestion();
-                }
-            }, 1200);
+            if (score >= targetScore) {
+                endGame();
+            } else {
+                nextQuestion();
+            }
         }
     }
 
