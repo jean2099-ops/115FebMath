@@ -35,7 +35,7 @@
         /* iPad Mini 橫式優化 */
         @media (orientation: landscape) and (max-height: 700px) {
             .game-container-layout { display: flex; flex-direction: row; align-items: center; gap: 20px; }
-            .side-info { width: 150px; flex-shrink: 0; }
+            .side-info { width: 120px; flex-shrink: 0; }
             .main-game-area { flex: 1; }
             #question-area { font-size: 2.25rem !important; }
         }
@@ -58,17 +58,6 @@
 
         .star-particle { position: absolute; pointer-events: none; animation: fly 1s ease-out forwards; }
         @keyframes fly { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
-        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
-        
-        .timer-badge {
-            background: #fee2e2;
-            color: #ef4444;
-            padding: 4px 12px;
-            border-radius: 999px;
-            font-weight: bold;
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -113,9 +102,6 @@
             <div class="side-info">
                 <div class="flex justify-between items-center mb-4 landscape:block">
                     <div class="text-center font-bold text-gray-500 text-sm mb-1" id="q-progress">進度: 0 / 20 題</div>
-                    <!-- 倒數計時與得分區域將根據模式隱藏 -->
-                    <div id="timer-display" class="timer-badge mb-2">剩餘時間: 05:00</div>
-                    <div id="score-display" class="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full font-bold text-center">Score: 0</div>
                     <button onclick="exitGame()" class="mt-2 text-gray-400 font-bold text-xs">❌ 退出</button>
                 </div>
             </div>
@@ -210,21 +196,8 @@
         document.getElementById('num-keyboard').classList.toggle('hidden', isEnglish);
         document.getElementById('letter-keyboard').classList.toggle('hidden', !isEnglish);
         
-        // 判斷是否顯示時間與分數
-        const timerBadge = document.getElementById('timer-display');
-        const scoreBadge = document.getElementById('score-display');
-        
-        if (m === 'subtraction-challenge') {
-            // 減法模式下，後台跑計時，但不顯示計時器與分數
-            timerBadge.style.display = 'none';
-            scoreBadge.style.display = 'none';
-            startTimer();
-        } else {
-            // 其他模式維持原樣
-            timerBadge.style.display = 'none';
-            scoreBadge.style.display = 'block';
-            scoreBadge.innerText = `Score: 0`;
-        }
+        // 僅在後台跑計時，不顯示介面
+        startTimer();
 
         if (isEnglish) updateLetterKeyboard(m === 'lower-to-upper');
         
@@ -342,12 +315,9 @@
                 document.getElementById('feedback').innerText = `可惜！正確答案是 ${target}`;
                 document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-red-500";
             }
-            document.getElementById('game-container').classList.add('shake');
-            setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 500);
         }
 
         questionsSolved++;
-        document.getElementById('score-display').innerText = `Score: ${score}`;
 
         if (mode === 'subtraction-challenge') {
             if (questionsSolved >= challengeMaxQuestions) {
