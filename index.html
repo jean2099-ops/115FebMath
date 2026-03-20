@@ -142,7 +142,7 @@
                 <div class="grid grid-cols-3 gap-2 w-full max-w-sm mx-auto">
                     <button onclick="clearInput()" class="bg-gray-400 text-white py-3 rounded-xl font-bold">清除</button>
                     <button onclick="nextQuestion(true)" class="bg-yellow-500 text-white py-3 rounded-xl font-bold">跳過</button>
-                    <button onclick="checkAnswer()" class="bg-green-500 text-white py-3 rounded-xl font-bold shadow-md">確定 💥</button>
+                    <button id="submit-btn" onclick="checkAnswer()" class="bg-green-500 text-white py-3 rounded-xl font-bold shadow-md">確定 💥</button>
                 </div>
                 <div id="feedback" class="mt-4 h-6 font-bold text-lg"></div>
             </div>
@@ -230,7 +230,6 @@
             updateTimerUI();
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                // 五分鐘一到直接結算
                 endGame(true);
             }
         }, 1000);
@@ -260,7 +259,6 @@
                 endGame();
                 return;
             }
-            // 這裡保留舊的邏輯：答對 20 題過關
             document.getElementById('q-progress').innerText = `已答對: ${score/5} / 20 題`;
         }
 
@@ -287,7 +285,6 @@
             qText.style.fontSize = "3rem";
         }
         else if(mode === 'subtraction-challenge') {
-            // 被減數 11-19, 減數 1-9, 且答案必須小於 10
             let a, b, result;
             do {
                 a = Math.floor(Math.random() * 9) + 11; // 11 to 19
@@ -332,18 +329,22 @@
         if(inputArr.length === 0) return;
         let userAns = inputArr.join('');
         
-        // 判斷對錯
         if(userAns === target) {
             score += pointsPerQuestion;
             document.getElementById('avatar').innerText = "🤩";
-            document.getElementById('feedback').innerText = "正確！得分 +5 💥";
-            document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-green-600";
-            createStars();
+            // 減法模式下不顯示 +5 文字提示與特效
+            if (mode !== 'subtraction-challenge') {
+                document.getElementById('feedback').innerText = "正確！得分 +5 💥";
+                document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-green-600";
+                createStars();
+            }
         } else {
-            // 答錯不加分，顯示提示
             document.getElementById('avatar').innerText = "😵";
-            document.getElementById('feedback').innerText = `可惜！正確答案是 ${target}`;
-            document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-red-500";
+            // 減法模式下不顯示錯誤正確答案提示
+            if (mode !== 'subtraction-challenge') {
+                document.getElementById('feedback').innerText = `可惜！正確答案是 ${target}`;
+                document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-red-500";
+            }
             document.getElementById('game-container').classList.add('shake');
             setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 500);
         }
@@ -351,14 +352,15 @@
         questionsSolved++;
         document.getElementById('score-display').innerText = `Score: ${score}`;
 
-        // 延遲後進入下一題或結算
+        // 在減法模式下，不論對錯均直接進入下一題或結算
+        const delay = mode === 'subtraction-challenge' ? 500 : 1200;
         setTimeout(() => {
             if (mode === 'subtraction-challenge' && questionsSolved >= challengeMaxQuestions) {
                 endGame();
             } else {
                 nextQuestion();
             }
-        }, 1200);
+        }, delay);
     }
 
     function createStars() {
@@ -374,7 +376,6 @@
         }
     }
 
-    // 結算畫面
     function endGame(isTimeUp = false) {
         clearInterval(timerInterval);
         document.getElementById('game-screen').classList.add('hidden');
