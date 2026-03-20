@@ -112,7 +112,7 @@
         <div class="game-container-layout">
             <div class="side-info">
                 <div class="flex justify-between items-center mb-4 landscape:block">
-                    <div class="text-center font-bold text-gray-500 text-sm mb-1" id="q-progress">已答對: 0 / 20 題</div>
+                    <div class="text-center font-bold text-gray-500 text-sm mb-1" id="q-progress">進度: 0 / 20 題</div>
                     <div id="timer-display" class="timer-badge mb-2">剩餘時間: 05:00</div>
                     <div id="score-display" class="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full font-bold text-center">Score: 0</div>
                     <button onclick="exitGame()" class="mt-2 text-gray-400 font-bold text-xs">❌ 退出</button>
@@ -164,7 +164,7 @@
     let target = '';
     let inputArr = [];
     let score = 0;
-    let questionsSolved = 0;
+    let questionsSolved = 0; // 當前作答題數 (不論對錯)
     let timerInterval = null;
     let timeLeft = 300; // 5 minutes in seconds
 
@@ -204,6 +204,7 @@
         document.getElementById('math-menu').classList.add('hidden');
         document.getElementById('english-menu').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
+        document.getElementById('score-display').innerText = `Score: 0`;
         
         const isEnglish = (m === 'upper-to-lower' || m === 'lower-to-upper');
         document.getElementById('num-keyboard').classList.toggle('hidden', isEnglish);
@@ -229,7 +230,8 @@
             updateTimerUI();
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                failChallenge("時間到！挑戰失敗！");
+                // 五分鐘一到直接結算
+                endGame(true);
             }
         }, 1000);
     }
@@ -246,18 +248,19 @@
     }
 
     function nextQuestion(isSkip = false) {
-        // 普通模式到達 100 分或挑戰模式完成 20 題
+        // 更新進度顯示
         if (mode === 'subtraction-challenge') {
             if (questionsSolved >= challengeMaxQuestions) {
                 endGame();
                 return;
             }
-            document.getElementById('q-progress').innerText = `挑戰進度: ${questionsSolved} / 20 題`;
+            document.getElementById('q-progress').innerText = `進度: ${questionsSolved + 1} / 20 題`;
         } else {
             if (score >= targetScore) {
                 endGame();
                 return;
             }
+            // 這裡保留舊的邏輯：答對 20 題過關
             document.getElementById('q-progress').innerText = `已答對: ${score/5} / 20 題`;
         }
 
@@ -290,7 +293,7 @@
                 a = Math.floor(Math.random() * 9) + 11; // 11 to 19
                 b = Math.floor(Math.random() * 9) + 1;  // 1 to 9
                 result = a - b;
-            } while (result >= 10); // 如果答案大於等於 10，重新產生
+            } while (result >= 10); 
 
             target = result.toString();
             qText.innerText = `${a} - ${b} = ?`;
@@ -329,32 +332,33 @@
         if(inputArr.length === 0) return;
         let userAns = inputArr.join('');
         
+        // 判斷對錯
         if(userAns === target) {
             score += pointsPerQuestion;
-            questionsSolved++;
-            document.getElementById('score-display').innerText = `Score: ${score}`;
             document.getElementById('avatar').innerText = "🤩";
             document.getElementById('feedback').innerText = "正確！得分 +5 💥";
             document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-green-600";
             createStars();
-            
-            // 判定過關
-            const isChallengeSuccess = (mode === 'subtraction-challenge' && questionsSolved >= challengeMaxQuestions);
-            const isNormalSuccess = (mode !== 'subtraction-challenge' && score >= targetScore);
-
-            if (isChallengeSuccess || isNormalSuccess) {
-                setTimeout(endGame, 1000);
-            } else {
-                setTimeout(() => nextQuestion(), 1200);
-            }
         } else {
+            // 答錯不加分，顯示提示
             document.getElementById('avatar').innerText = "😵";
-            document.getElementById('feedback').innerText = "不對喔，再試試看！";
+            document.getElementById('feedback').innerText = `可惜！正確答案是 ${target}`;
             document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-red-500";
             document.getElementById('game-container').classList.add('shake');
             setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 500);
-            clearInput();
         }
+
+        questionsSolved++;
+        document.getElementById('score-display').innerText = `Score: ${score}`;
+
+        // 延遲後進入下一題或結算
+        setTimeout(() => {
+            if (mode === 'subtraction-challenge' && questionsSolved >= challengeMaxQuestions) {
+                endGame();
+            } else {
+                nextQuestion();
+            }
+        }, 1200);
     }
 
     function createStars() {
@@ -370,25 +374,37 @@
         }
     }
 
-    function failChallenge(msg) {
-        document.getElementById('game-screen').classList.add('hidden');
-        document.getElementById('result-screen').classList.remove('hidden');
-        document.getElementById('result-title').innerText = "挑戰失敗";
-        document.getElementById('result-icon').innerText = "⏰💥";
-        document.getElementById('result-score').innerText = `完成題數: ${questionsSolved}`;
-        document.getElementById('result-msg').innerText = msg;
-        document.getElementById('avatar').innerText = "😢";
-    }
-
-    function endGame() {
+    // 結算畫面
+    function endGame(isTimeUp = false) {
         clearInterval(timerInterval);
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
-        document.getElementById('result-title').innerText = "挑戰成功！";
-        document.getElementById('result-icon').innerText = "🏆✨";
-        document.getElementById('result-score').innerText = "100 分達成！";
-        document.getElementById('result-msg').innerText = "你贏得了奧特曼榮耀獎盃";
-        document.getElementById('avatar').innerText = "👑";
+        
+        const title = document.getElementById('result-title');
+        const icon = document.getElementById('result-icon');
+        const scoreText = document.getElementById('result-score');
+        const msg = document.getElementById('result-msg');
+
+        if (isTimeUp) {
+            title.innerText = "時間到！挑戰結束";
+            icon.innerText = "⏰💥";
+        } else if (score >= 100) {
+            title.innerText = "挑戰成功！全對！";
+            icon.innerText = "🏆✨";
+        } else {
+            title.innerText = "挑戰結束！";
+            icon.innerText = "💪✨";
+        }
+
+        scoreText.innerText = `${score} 分達成！`;
+        
+        if (mode === 'subtraction-challenge') {
+            msg.innerText = `你在 5 分鐘內完成了 ${questionsSolved} 題練習。`;
+        } else {
+            msg.innerText = "你贏得了奧特曼榮耀獎盃";
+        }
+        
+        document.getElementById('avatar').innerText = score >= 80 ? "👑" : "🦸";
     }
 </script>
 
