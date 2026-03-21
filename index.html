@@ -141,7 +141,12 @@
         <h2 class="text-3xl font-bold text-red-600 mb-4" id="result-title">挑戰成功！</h2>
         <div class="text-6xl mb-4" id="result-icon">🏆✨</div>
         <p class="text-2xl mb-1 font-bold text-blue-800" id="result-score">100 分達成！</p>
-        <p class="text-xl mb-4 font-bold text-purple-600" id="result-stats">總共 20 題，答對了 20 題</p>
+        
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 mb-6 max-w-xs mx-auto">
+            <p class="text-xl mb-1 font-bold text-purple-600" id="result-stats">總共 20 題，答對了 20 題</p>
+            <p class="text-lg font-bold text-gray-700" id="result-time-detail">共花了 0 分 0 秒完成</p>
+        </div>
+
         <p class="text-lg text-gray-600 mb-6" id="result-msg">你贏得了奧特曼榮耀獎盃</p>
         <button onclick="location.reload()" class="w-full max-w-xs mx-auto bg-blue-600 text-white py-4 rounded-xl text-xl font-bold">再玩一次</button>
     </div>
@@ -153,9 +158,10 @@
     let inputArr = [];
     let score = 0;
     let questionsSolved = 0; 
-    let correctCount = 0; // 新增答對題數記錄
+    let correctCount = 0;
     let timerInterval = null;
     let timeLeft = 300; 
+    let startTime = null; // 新增開始時間紀錄
 
     const targetScore = 100;
     const pointsPerQuestion = 5;
@@ -186,9 +192,10 @@
         mode = m;
         score = 0;
         questionsSolved = 0;
-        correctCount = 0; // 重置答對題數
+        correctCount = 0;
         usedLetters = [];
         timeLeft = 300;
+        startTime = new Date(); // 紀錄開始遊戲的時間
         clearInterval(timerInterval);
 
         document.getElementById('math-menu').classList.add('hidden');
@@ -222,7 +229,6 @@
     }
 
     function nextQuestion(isSkip = false) {
-        // 如果是跳過的題目，也算進已處理題數（僅限減法挑戰模式）
         if(isSkip && mode === 'subtraction-challenge') {
             questionsSolved++;
             if(questionsSolved >= challengeMaxQuestions) {
@@ -230,7 +236,7 @@
                 return;
             }
         } else if (isSkip) {
-            // 普通模式跳過不增加題數，只更換題目
+            // 一般模式跳過更換題目，不加進度
         }
 
         if (mode === 'subtraction-challenge') {
@@ -317,15 +323,13 @@
         
         if(isCorrect) {
             score += pointsPerQuestion;
-            correctCount++; // 答對題數增加
+            correctCount++;
             document.getElementById('avatar').innerText = "🤩";
             if (mode !== 'subtraction-challenge') {
                 document.getElementById('feedback').innerText = "正確！得分 +5 💥";
                 document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-green-600";
                 createStars();
             }
-        } else {
-            document.getElementById('feedback').innerText = ""; 
         }
 
         questionsSolved++;
@@ -370,8 +374,18 @@
         }
     }
 
+    function formatTimeElapsed(start) {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - start) / 1000);
+        const mins = Math.floor(diffInSeconds / 60);
+        const secs = diffInSeconds % 60;
+        return `${mins} 分 ${secs} 秒`;
+    }
+
     function endGame(isTimeUp = false) {
         clearInterval(timerInterval);
+        const timeStr = formatTimeElapsed(startTime);
+
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
         
@@ -379,6 +393,7 @@
         const icon = document.getElementById('result-icon');
         const scoreText = document.getElementById('result-score');
         const statsText = document.getElementById('result-stats');
+        const timeDetailText = document.getElementById('result-time-detail');
         const msg = document.getElementById('result-msg');
 
         if (isTimeUp) {
@@ -394,14 +409,14 @@
 
         scoreText.innerText = `${score} 分達成！`;
         
-        // 根據不同模式計算總題數顯示
-        let totalLimit = 20;
-        statsText.innerText = `總共 ${totalLimit} 題，答對了 ${correctCount} 題`;
+        // 顯示統計數據
+        statsText.innerText = `總共練習 ${questionsSolved} 題，答對了 ${correctCount} 題`;
+        timeDetailText.innerText = `共花了 ${timeStr} 完成`;
         
         if (mode === 'subtraction-challenge') {
-            msg.innerText = `你在 5 分鐘內完成了 ${questionsSolved} 題練習。`;
+            msg.innerText = `你在 5 分鐘挑戰中展現了超凡毅力！`;
         } else {
-            msg.innerText = "你贏得了奧特曼榮耀獎盃";
+            msg.innerText = "恭喜你贏得了奧特曼榮耀獎盃";
         }
         
         document.getElementById('avatar').innerText = correctCount >= 16 ? "👑" : "🦸";
