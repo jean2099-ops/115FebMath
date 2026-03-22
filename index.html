@@ -58,6 +58,13 @@
 
         .star-particle { position: absolute; pointer-events: none; animation: fly 1s ease-out forwards; }
         @keyframes fly { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
+        
+        #wrong-questions-list {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px dashed #ef4444;
+            background: #fff5f5;
+        }
     </style>
 </head>
 <body>
@@ -68,7 +75,7 @@
     <!-- 主選單 -->
     <div id="category-screen" class="w-full">
         <h1 class="text-3xl font-bold text-red-600 mb-2">奧特曼全能挑戰</h1>
-        <p class="text-blue-600 mb-6 font-bold">答對 20 題獲得獎盃 🏆</p>
+        <p class="text-blue-600 mb-6 font-bold">答對 25 題獲得獎盃 🏆</p>
         <div class="grid grid-cols-1 gap-4 max-w-sm mx-auto">
             <button onclick="showSubMenu('math')" class="bg-blue-600 text-white text-xl py-5 rounded-2xl shadow-lg font-bold">數學挑戰 ➕</button>
             <button onclick="showSubMenu('english')" class="bg-purple-600 text-white text-xl py-5 rounded-2xl shadow-lg font-bold">英文挑戰 🔤</button>
@@ -79,9 +86,9 @@
     <div id="math-menu" class="hidden w-full">
         <h2 class="text-2xl font-bold text-blue-700 mb-6">數學練習項目</h2>
         <div class="grid grid-cols-1 gap-4 max-w-sm mx-auto">
-            <button onclick="startGame('subtraction-challenge')" class="bg-red-500 text-white text-lg py-4 rounded-xl font-bold shadow-md">1-20 減法 (20題/5分)</button>
-            <button onclick="startGame('sequence')" class="bg-white border-2 border-blue-600 text-blue-600 text-lg py-4 rounded-xl font-bold">1-30 數列 (3~6個數)</button>
-            <button onclick="startGame('arithmetic')" class="bg-white border-2 border-blue-600 text-blue-600 text-lg py-4 rounded-xl font-bold">1-10 加減法</button>
+            <button onclick="startGame('subtraction-challenge')" class="bg-red-500 text-white text-lg py-4 rounded-xl font-bold shadow-md">1-20 減法 (25題挑戰)</button>
+            <button onclick="startGame('sequence')" class="bg-white border-2 border-blue-600 text-blue-600 text-lg py-4 rounded-xl font-bold">1-30 數列挑戰</button>
+            <button onclick="startGame('arithmetic')" class="bg-white border-2 border-blue-600 text-blue-600 text-lg py-4 rounded-xl font-bold">1-10 混合加減</button>
             <button onclick="location.reload()" class="mt-4 text-gray-500 underline">返回</button>
         </div>
     </div>
@@ -101,7 +108,7 @@
         <div class="game-container-layout">
             <div class="side-info">
                 <div class="flex justify-between items-center mb-4 landscape:block">
-                    <div class="text-center font-bold text-gray-500 text-sm mb-1" id="q-progress">進度: 0 / 20 題</div>
+                    <div class="text-center font-bold text-gray-500 text-sm mb-1" id="q-progress">進度: 0 / 25 題</div>
                     <button onclick="exitGame()" class="mt-2 text-gray-400 font-bold text-xs">❌ 退出</button>
                 </div>
             </div>
@@ -138,34 +145,40 @@
 
     <!-- 結果畫面 -->
     <div id="result-screen" class="hidden w-full">
-        <h2 class="text-3xl font-bold text-red-600 mb-4" id="result-title">挑戰成功！</h2>
-        <div class="text-6xl mb-4" id="result-icon">🏆✨</div>
+        <h2 class="text-3xl font-bold text-red-600 mb-2" id="result-title">挑戰完成！</h2>
+        <div class="text-5xl mb-2" id="result-icon">🏆</div>
         <p class="text-2xl mb-1 font-bold text-blue-800" id="result-score">100 分達成！</p>
         
-        <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 mb-6 max-w-xs mx-auto">
-            <p class="text-xl mb-1 font-bold text-purple-600" id="result-stats">總共 20 題，答對了 20 題</p>
-            <p class="text-lg font-bold text-gray-700" id="result-time-detail">共花了 0 分 0 秒完成</p>
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-3 mb-4 max-w-sm mx-auto text-left">
+            <p class="text-lg font-bold text-purple-600 mb-1" id="result-stats">總共練習 25 題，答對 25 題</p>
+            <p class="text-md font-bold text-gray-700 mb-2" id="result-time-detail">消耗時間：0 分 0 秒</p>
+            
+            <div id="wrong-area" class="mt-2 hidden">
+                <p class="text-red-500 font-bold text-sm mb-1">⚠️ 需要練習的題目：</p>
+                <div id="wrong-questions-list" class="rounded-lg p-2 text-sm font-bold text-gray-600 grid grid-cols-2 gap-2">
+                </div>
+            </div>
         </div>
 
-        <p class="text-lg text-gray-600 mb-6" id="result-msg">你贏得了奧特曼榮耀獎盃</p>
-        <button onclick="location.reload()" class="w-full max-w-xs mx-auto bg-blue-600 text-white py-4 rounded-xl text-xl font-bold">再玩一次</button>
+        <button onclick="location.reload()" class="w-full max-w-xs mx-auto bg-blue-600 text-white py-4 rounded-xl text-xl font-bold shadow-lg">回主選單</button>
     </div>
 </div>
 
 <script>
     let mode = '';
     let target = '';
+    let currentQuestionDisplay = ''; 
     let inputArr = [];
     let score = 0;
     let questionsSolved = 0; 
     let correctCount = 0;
     let timerInterval = null;
-    let timeLeft = 300; 
-    let startTime = null; // 新增開始時間紀錄
+    let startTime = null;
+    let wrongQuestions = []; 
 
-    const targetScore = 100;
-    const pointsPerQuestion = 5;
-    const challengeMaxQuestions = 20;
+    // 每回合變更為 25 題，每題 4 分
+    const pointsPerQuestion = 4;
+    const challengeMaxQuestions = 25;
 
     const alphabet = "abcdefghijklmnopqrstuvwxyz".split('');
     let usedLetters = [];
@@ -194,8 +207,8 @@
         questionsSolved = 0;
         correctCount = 0;
         usedLetters = [];
-        timeLeft = 300;
-        startTime = new Date(); // 紀錄開始遊戲的時間
+        wrongQuestions = [];
+        startTime = new Date();
         clearInterval(timerInterval);
 
         document.getElementById('math-menu').classList.add('hidden');
@@ -206,21 +219,8 @@
         document.getElementById('num-keyboard').classList.toggle('hidden', isEnglish);
         document.getElementById('letter-keyboard').classList.toggle('hidden', !isEnglish);
         
-        startTimer();
-
         if (isEnglish) updateLetterKeyboard(m === 'lower-to-upper');
-        
         nextQuestion();
-    }
-
-    function startTimer() {
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                endGame(true);
-            }
-        }, 1000);
     }
 
     function exitGame() {
@@ -229,29 +229,20 @@
     }
 
     function nextQuestion(isSkip = false) {
-        if(isSkip && mode === 'subtraction-challenge') {
+        if(isSkip) {
             questionsSolved++;
             if(questionsSolved >= challengeMaxQuestions) {
                 endGame();
                 return;
             }
-        } else if (isSkip) {
-            // 一般模式跳過更換題目，不加進度
         }
 
-        if (mode === 'subtraction-challenge') {
-            if (questionsSolved >= challengeMaxQuestions) {
-                endGame();
-                return;
-            }
-            document.getElementById('q-progress').innerText = `進度: ${questionsSolved + 1} / 20 題`;
-        } else {
-            if (score >= targetScore) {
-                endGame();
-                return;
-            }
-            document.getElementById('q-progress').innerText = `已答對: ${correctCount} / 20 題`;
+        if (questionsSolved >= challengeMaxQuestions) {
+            endGame();
+            return;
         }
+
+        document.getElementById('q-progress').innerText = `進度: ${questionsSolved + 1} / ${challengeMaxQuestions} 題`;
 
         inputArr = [];
         updateUI();
@@ -266,25 +257,28 @@
             const seq = Array.from({length: len}, (_, i) => start + i);
             const gapIdx = Math.floor(Math.random() * len);
             target = seq[gapIdx].toString();
-            qText.innerText = seq.map((n, i) => i === gapIdx ? "__" : n).join(", ");
+            currentQuestionDisplay = seq.map((n, i) => i === gapIdx ? "__" : n).join(", ");
+            qText.innerText = currentQuestionDisplay;
             qText.style.fontSize = len > 5 ? "1.5rem" : "2.25rem";
         } 
         else if(mode === 'arithmetic') {
             let a = Math.floor(Math.random()*5)+5, b = Math.floor(Math.random()*5)+1;
-            if(Math.random() > 0.5) { target = (a+b).toString(); qText.innerText = `${a} + ${b} = ?`; }
-            else { target = (a-b).toString(); qText.innerText = `${a} - ${b} = ?`; }
+            if(Math.random() > 0.5) { 
+                target = (a+b).toString(); 
+                currentQuestionDisplay = `${a} + ${b} = ?`;
+            } else { 
+                target = (a-b).toString(); 
+                currentQuestionDisplay = `${a} - ${b} = ?`;
+            }
+            qText.innerText = currentQuestionDisplay;
             qText.style.fontSize = "3rem";
         }
         else if(mode === 'subtraction-challenge') {
-            let a, b, result;
-            do {
-                a = Math.floor(Math.random() * 9) + 11; 
-                b = Math.floor(Math.random() * 9) + 1;  
-                result = a - b;
-            } while (result >= 10); 
-
-            target = result.toString();
-            qText.innerText = `${a} - ${b} = ?`;
+            let a, b, res;
+            do { a = Math.floor(Math.random() * 9) + 11; b = Math.floor(Math.random() * 9) + 1; res = a - b; } while (res >= 10); 
+            target = res.toString();
+            currentQuestionDisplay = `${a} - ${b} = ?`;
+            qText.innerText = currentQuestionDisplay;
             qText.style.fontSize = "4rem";
         }
         else if(mode === 'upper-to-lower' || mode === 'lower-to-upper') {
@@ -292,22 +286,20 @@
             let available = alphabet.filter(l => !usedLetters.includes(l));
             let char = available[Math.floor(Math.random() * available.length)];
             usedLetters.push(char);
-
             if (mode === 'upper-to-lower') {
                 target = char.toLowerCase();
+                currentQuestionDisplay = `${char.toUpperCase()} 的小寫`;
                 qText.innerHTML = `<span class="text-7xl text-purple-700">${char.toUpperCase()}</span> <span class="text-xl ml-4">選小寫</span>`;
             } else {
                 target = char.toUpperCase();
+                currentQuestionDisplay = `${char.toLowerCase()} 的大寫`;
                 qText.innerHTML = `<span class="text-7xl text-purple-700">${char.toLowerCase()}</span> <span class="text-xl ml-4">選大寫</span>`;
             }
         }
     }
 
     function pressKey(k) {
-        if(inputArr.length < 5) {
-            inputArr.push(k);
-            updateUI();
-        }
+        if(inputArr.length < 5) { inputArr.push(k); updateUI(); }
     }
 
     function clearInput() { inputArr = []; updateUI(); }
@@ -325,40 +317,21 @@
             score += pointsPerQuestion;
             correctCount++;
             document.getElementById('avatar').innerText = "🤩";
-            if (mode !== 'subtraction-challenge') {
-                document.getElementById('feedback').innerText = "正確！得分 +5 💥";
-                document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-green-600";
-                createStars();
-            }
+            document.getElementById('feedback').innerText = "正確！💥";
+            document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-green-600";
+            createStars();
+        } else {
+            wrongQuestions.push(currentQuestionDisplay);
+            document.getElementById('avatar').innerText = "😣";
+            document.getElementById('feedback').innerText = "不對喔，加油！";
+            document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-red-500";
         }
 
         questionsSolved++;
-
-        if (isCorrect) {
-            if (mode === 'subtraction-challenge') {
-                checkEndCondition();
-            } else {
-                setTimeout(checkEndCondition, 1200);
-            }
-        } else {
-            checkEndCondition();
-        }
-    }
-
-    function checkEndCondition() {
-        if (mode === 'subtraction-challenge') {
-            if (questionsSolved >= challengeMaxQuestions) {
-                endGame();
-            } else {
-                nextQuestion();
-            }
-        } else {
-            if (score >= targetScore) {
-                endGame();
-            } else {
-                nextQuestion();
-            }
-        }
+        setTimeout(() => {
+            if (questionsSolved >= challengeMaxQuestions) endGame();
+            else nextQuestion();
+        }, 800);
     }
 
     function createStars() {
@@ -374,52 +347,37 @@
         }
     }
 
-    function formatTimeElapsed(start) {
-        const now = new Date();
-        const diffInSeconds = Math.floor((now - start) / 1000);
-        const mins = Math.floor(diffInSeconds / 60);
-        const secs = diffInSeconds % 60;
-        return `${mins} 分 ${secs} 秒`;
-    }
-
-    function endGame(isTimeUp = false) {
+    function endGame() {
         clearInterval(timerInterval);
-        const timeStr = formatTimeElapsed(startTime);
+        const now = new Date();
+        const diff = Math.floor((now - startTime) / 1000);
+        const mins = Math.floor(diff / 60);
+        const secs = diff % 60;
 
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
         
-        const title = document.getElementById('result-title');
-        const icon = document.getElementById('result-icon');
-        const scoreText = document.getElementById('result-score');
-        const statsText = document.getElementById('result-stats');
-        const timeDetailText = document.getElementById('result-time-detail');
-        const msg = document.getElementById('result-msg');
-
-        if (isTimeUp) {
-            title.innerText = "時間到！挑戰結束";
-            icon.innerText = "⏰💥";
-        } else if (score >= 100) {
-            title.innerText = "挑戰成功！全對！";
-            icon.innerText = "🏆✨";
-        } else {
-            title.innerText = "挑戰結束！";
-            icon.innerText = "💪✨";
-        }
-
-        scoreText.innerText = `${score} 分達成！`;
+        document.getElementById('result-score').innerText = `${score} 分達成！`;
+        document.getElementById('result-stats').innerText = `總共練習 ${questionsSolved} 題，答對了 ${correctCount} 題`;
+        document.getElementById('result-time-detail').innerText = `消耗時間：${mins} 分 ${secs} 秒`;
         
-        // 顯示統計數據
-        statsText.innerText = `總共練習 ${questionsSolved} 題，答對了 ${correctCount} 題`;
-        timeDetailText.innerText = `共花了 ${timeStr} 完成`;
+        const wrongArea = document.getElementById('wrong-area');
+        const wrongList = document.getElementById('wrong-questions-list');
+        wrongList.innerHTML = '';
         
-        if (mode === 'subtraction-challenge') {
-            msg.innerText = `你在 5 分鐘挑戰中展現了超凡毅力！`;
+        if (wrongQuestions.length > 0) {
+            wrongArea.classList.remove('hidden');
+            wrongQuestions.forEach(q => {
+                const item = document.createElement('div');
+                item.className = "bg-white p-2 rounded shadow-sm border-l-4 border-red-400";
+                item.innerText = q;
+                wrongList.appendChild(item);
+            });
         } else {
-            msg.innerText = "恭喜你贏得了奧特曼榮耀獎盃";
+            wrongArea.classList.add('hidden');
         }
         
-        document.getElementById('avatar').innerText = correctCount >= 16 ? "👑" : "🦸";
+        document.getElementById('avatar').innerText = correctCount >= 22 ? "👑" : "🦸";
     }
 </script>
 
