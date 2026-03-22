@@ -56,9 +56,6 @@
         }
         .number-btn:active, .letter-btn:active { background: #d1d5db; transform: scale(0.95); }
 
-        .star-particle { position: absolute; pointer-events: none; animation: fly 1s ease-out forwards; }
-        @keyframes fly { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
-        
         #wrong-questions-list {
             max-height: 150px;
             overflow-y: auto;
@@ -138,7 +135,7 @@
                     <button onclick="nextQuestion(true)" class="bg-yellow-500 text-white py-3 rounded-xl font-bold">跳過</button>
                     <button id="submit-btn" onclick="checkAnswer()" class="bg-green-500 text-white py-3 rounded-xl font-bold shadow-md">確定 💥</button>
                 </div>
-                <div id="feedback" class="mt-4 h-6 font-bold text-lg"></div>
+                <!-- 回饋區域已移除 -->
             </div>
         </div>
     </div>
@@ -176,7 +173,6 @@
     let startTime = null;
     let wrongQuestions = []; 
 
-    // 每回合變更為 25 題，每題 4 分
     const pointsPerQuestion = 4;
     const challengeMaxQuestions = 25;
 
@@ -246,8 +242,7 @@
 
         inputArr = [];
         updateUI();
-        document.getElementById('feedback').innerText = '';
-        document.getElementById('avatar').innerText = "🤔";
+        document.getElementById('avatar').innerText = "🦸";
 
         const qText = document.getElementById('question-area');
 
@@ -316,34 +311,17 @@
         if(isCorrect) {
             score += pointsPerQuestion;
             correctCount++;
-            document.getElementById('avatar').innerText = "🤩";
-            document.getElementById('feedback').innerText = "正確！💥";
-            document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-green-600";
-            createStars();
         } else {
             wrongQuestions.push(currentQuestionDisplay);
-            document.getElementById('avatar').innerText = "😣";
-            document.getElementById('feedback').innerText = "不對喔，加油！";
-            document.getElementById('feedback').className = "mt-4 h-6 font-bold text-lg text-red-500";
         }
 
         questionsSolved++;
-        setTimeout(() => {
-            if (questionsSolved >= challengeMaxQuestions) endGame();
-            else nextQuestion();
-        }, 800);
-    }
-
-    function createStars() {
-        for (let i = 0; i < 15; i++) {
-            const star = document.createElement('div');
-            star.innerText = "⭐";
-            star.className = "star-particle";
-            star.style.setProperty('--dx', (Math.random()-0.5)*400+'px');
-            star.style.setProperty('--dy', (Math.random()-0.5)*400+'px');
-            star.style.left = "50%"; star.style.top = "50%";
-            document.getElementById('game-container').appendChild(star);
-            setTimeout(() => star.remove(), 1000);
+        
+        // 立即切換，移除延遲與特效
+        if (questionsSolved >= challengeMaxQuestions) {
+            endGame();
+        } else {
+            nextQuestion();
         }
     }
 
