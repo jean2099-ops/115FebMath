@@ -83,6 +83,7 @@
     <div id="math-menu" class="hidden w-full">
         <h2 class="text-2xl font-bold text-blue-700 mb-6">數學練習項目</h2>
         <div class="grid grid-cols-1 gap-4 max-w-sm mx-auto">
+            <button onclick="startGame('addition-challenge')" class="bg-green-500 text-white text-lg py-4 rounded-xl font-bold shadow-md">1-20 加法 (25題挑戰)</button>
             <button onclick="startGame('subtraction-challenge')" class="bg-red-500 text-white text-lg py-4 rounded-xl font-bold shadow-md">1-20 減法 (25題挑戰)</button>
             <button onclick="startGame('sequence')" class="bg-white border-2 border-blue-600 text-blue-600 text-lg py-4 rounded-xl font-bold">1-30 數列挑戰</button>
             <button onclick="startGame('arithmetic')" class="bg-white border-2 border-blue-600 text-blue-600 text-lg py-4 rounded-xl font-bold">1-10 混合加減</button>
@@ -135,7 +136,6 @@
                     <button onclick="nextQuestion(true)" class="bg-yellow-500 text-white py-3 rounded-xl font-bold">跳過</button>
                     <button id="submit-btn" onclick="checkAnswer()" class="bg-green-500 text-white py-3 rounded-xl font-bold shadow-md">確定 💥</button>
                 </div>
-                <!-- 回饋區域已移除 -->
             </div>
         </div>
     </div>
@@ -172,6 +172,7 @@
     let timerInterval = null;
     let startTime = null;
     let wrongQuestions = []; 
+    let questionPool = []; // 預先生成的題目池
 
     const pointsPerQuestion = 4;
     const challengeMaxQuestions = 25;
@@ -197,6 +198,37 @@
         });
     }
 
+    // 洗牌算法
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // 專門為加法挑戰生成 25 題
+    function generateAdditionPool() {
+        let pool = [];
+        // 生成 8 題和在 10 以內的題目
+        while(pool.length < 8) {
+            let a = Math.floor(Math.random() * 9) + 1;
+            let b = Math.floor(Math.random() * 9) + 1;
+            if(a + b <= 10) {
+                pool.push({ a, b, target: (a + b).toString() });
+            }
+        }
+        // 生成 17 題和在 11 到 20 之間的題目
+        while(pool.length < 25) {
+            let a = Math.floor(Math.random() * 10) + 1;
+            let b = Math.floor(Math.random() * 10) + 1;
+            if(a + b > 10 && a + b <= 20) {
+                pool.push({ a, b, target: (a + b).toString() });
+            }
+        }
+        return shuffle(pool);
+    }
+
     function startGame(m) {
         mode = m;
         score = 0;
@@ -204,8 +236,13 @@
         correctCount = 0;
         usedLetters = [];
         wrongQuestions = [];
+        questionPool = [];
         startTime = new Date();
         clearInterval(timerInterval);
+
+        if(m === 'addition-challenge') {
+            questionPool = generateAdditionPool();
+        }
 
         document.getElementById('math-menu').classList.add('hidden');
         document.getElementById('english-menu').classList.add('hidden');
@@ -246,7 +283,22 @@
 
         const qText = document.getElementById('question-area');
 
-        if(mode === 'sequence') {
+        if(mode === 'addition-challenge') {
+            const qData = questionPool[questionsSolved];
+            target = qData.target;
+            currentQuestionDisplay = `${qData.a} + ${qData.b} = ?`;
+            qText.innerText = currentQuestionDisplay;
+            qText.style.fontSize = "4rem";
+        }
+        else if(mode === 'subtraction-challenge') {
+            let a, b, res;
+            do { a = Math.floor(Math.random() * 10) + 11; b = Math.floor(Math.random() * 10) + 1; res = a - b; } while (res >= 10 || res <= 0); 
+            target = res.toString();
+            currentQuestionDisplay = `${a} - ${b} = ?`;
+            qText.innerText = currentQuestionDisplay;
+            qText.style.fontSize = "4rem";
+        }
+        else if(mode === 'sequence') {
             const len = Math.floor(Math.random() * 4) + 3; 
             const start = Math.floor(Math.random() * (30 - len)) + 1;
             const seq = Array.from({length: len}, (_, i) => start + i);
@@ -267,14 +319,6 @@
             }
             qText.innerText = currentQuestionDisplay;
             qText.style.fontSize = "3rem";
-        }
-        else if(mode === 'subtraction-challenge') {
-            let a, b, res;
-            do { a = Math.floor(Math.random() * 9) + 11; b = Math.floor(Math.random() * 9) + 1; res = a - b; } while (res >= 10); 
-            target = res.toString();
-            currentQuestionDisplay = `${a} - ${b} = ?`;
-            qText.innerText = currentQuestionDisplay;
-            qText.style.fontSize = "4rem";
         }
         else if(mode === 'upper-to-lower' || mode === 'lower-to-upper') {
             if (usedLetters.length >= 26) usedLetters = [];
@@ -317,7 +361,6 @@
 
         questionsSolved++;
         
-        // 立即切換，移除延遲與特效
         if (questionsSolved >= challengeMaxQuestions) {
             endGame();
         } else {
