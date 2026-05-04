@@ -32,7 +32,6 @@
             overflow-y: auto;
         }
 
-        /* iPad Mini 橫式優化 */
         @media (orientation: landscape) and (max-height: 700px) {
             .game-container-layout { display: flex; flex-direction: row; align-items: center; gap: 20px; }
             .side-info { width: 120px; flex-shrink: 0; }
@@ -83,8 +82,8 @@
     <div id="math-menu" class="hidden w-full">
         <h2 class="text-2xl font-bold text-blue-700 mb-6">數學練習項目</h2>
         <div class="grid grid-cols-1 gap-4 max-w-sm mx-auto">
-            <button onclick="startGame('addition-challenge')" class="bg-green-500 text-white text-lg py-4 rounded-xl font-bold shadow-md">1-20 加法 (40題挑戰)</button>
-            <button onclick="startGame('subtraction-challenge')" class="bg-red-500 text-white text-lg py-4 rounded-xl font-bold shadow-md">1-20 減法 (40題挑戰)</button>
+            <button onclick="startGame('addition-challenge')" class="bg-green-500 text-white text-lg py-4 rounded-xl font-bold shadow-md">1-20 加法 (循序漸進40題)</button>
+            <button onclick="startGame('subtraction-challenge')" class="bg-red-500 text-white text-lg py-4 rounded-xl font-bold shadow-md">1-20 減法 (不含0, 40題)</button>
             <button onclick="startGame('sequence')" class="bg-white border-2 border-blue-600 text-blue-600 text-lg py-4 rounded-xl font-bold">1-30 數列挑戰 (25題)</button>
             <button onclick="startGame('arithmetic')" class="bg-white border-2 border-blue-600 text-blue-600 text-lg py-4 rounded-xl font-bold">1-10 混合加減 (25題)</button>
             <button onclick="location.reload()" class="mt-4 text-gray-500 underline">返回</button>
@@ -174,8 +173,8 @@
     let wrongQuestions = []; 
     let questionPool = []; 
 
-    let maxQuestions = 25; // 預設 25
-    let pointsPerQuestion = 4; // 預設 100/25
+    let maxQuestions = 25; 
+    let pointsPerQuestion = 4; 
 
     const alphabet = "abcdefghijklmnopqrstuvwxyz".split('');
     let usedLetters = [];
@@ -206,45 +205,55 @@
         return array;
     }
 
-    // 生成加法池：40題。10題(1-9+1-9), 30題(10-19+1-9)，和皆 <= 20
     function generateAdditionPool() {
-        let pool = [];
-        // 1. 個位數加個位數 (10題)
-        while(pool.length < 10) {
+        let poolEasy = [];
+        let poolHard = [];
+        
+        // 1-20 題：個位數 + 個位數 (1-9)
+        while(poolEasy.length < 20) {
             let a = Math.floor(Math.random() * 9) + 1;
             let b = Math.floor(Math.random() * 9) + 1;
-            if(a + b <= 20) { // 加法和不超過20
-                pool.push({ a, b, target: (a + b).toString() });
+            if(a + b <= 20) { // 和不會是0，因為a,b皆>=1
+                poolEasy.push({ a, b, target: (a + b).toString() });
             }
         }
-        // 2. 被加數1-19，加數個位數 (其餘30題)
-        while(pool.length < 40) {
-            let a = Math.floor(Math.random() * 19) + 1;
+        
+        // 21-40 題：兩位數 + 個位數
+        while(poolHard.length < 20) {
+            let a = Math.floor(Math.random() * 10) + 10; // 10-19
             let b = Math.floor(Math.random() * 9) + 1;
-            // 排除第一階段已經選過的純個位數加法(若想嚴格區分的話)，但這裡只要總和<=20即可
             if(a + b <= 20) {
-                if(a >= 10) { // 確保大部分是兩位數
-                    pool.push({ a, b, target: (a + b).toString() });
-                } else if (pool.length < 15) { // 允許少量個位數混入
-                     pool.push({ a, b, target: (a + b).toString() });
-                }
+                poolHard.push({ a, b, target: (a + b).toString() });
             }
         }
-        return shuffle(pool);
+        
+        return [...shuffle(poolEasy), ...shuffle(poolHard)];
     }
 
-    // 生成減法池：40題。被減數1-19，差<=20且不為負
     function generateSubtractionPool() {
-        let pool = [];
-        while(pool.length < 40) {
-            let a = Math.floor(Math.random() * 19) + 1; // 1-19
-            let b = Math.floor(Math.random() * 19) + 1; // 1-19
-            let res = a - b;
-            if(res >= 0 && res <= 20) {
-                pool.push({ a, b, target: res.toString() });
+        let poolEasy = [];
+        let poolHard = [];
+        
+        // 1-20 題：個位數 - 個位數 (差不能為0)
+        while(poolEasy.length < 20) {
+            let a = Math.floor(Math.random() * 9) + 1;
+            let b = Math.floor(Math.random() * 9) + 1;
+            // 差大於0，確保不會出現 a=b 的情況
+            if(a - b > 0) {
+                poolEasy.push({ a, b, target: (a - b).toString() });
             }
         }
-        return shuffle(pool);
+        
+        // 21-40 題：兩位數被減數 (差不能為0)
+        while(poolHard.length < 20) {
+            let a = Math.floor(Math.random() * 10) + 10; // 10-19
+            let b = Math.floor(Math.random() * 18) + 1;
+            if(a - b > 0 && a - b <= 20) {
+                poolHard.push({ a, b, target: (a - b).toString() });
+            }
+        }
+        
+        return [...shuffle(poolEasy), ...shuffle(poolHard)];
     }
 
     function startGame(m) {
@@ -256,7 +265,6 @@
         wrongQuestions = [];
         questionPool = [];
         
-        // 判斷題數與每題分數
         if(m === 'addition-challenge' || m === 'subtraction-challenge') {
             maxQuestions = 40;
             pointsPerQuestion = 2.5;
@@ -328,11 +336,13 @@
             qText.style.fontSize = len > 5 ? "1.5rem" : "2.25rem";
         } 
         else if(mode === 'arithmetic') {
-            let a = Math.floor(Math.random()*5)+5, b = Math.floor(Math.random()*5)+1;
+            let a = Math.floor(Math.random()*5)+5, b = Math.floor(Math.random()*4)+1;
             if(Math.random() > 0.5) { 
                 target = (a+b).toString(); 
                 currentQuestionDisplay = `${a} + ${b} = ?`;
             } else { 
+                // 確保差不為0
+                if(a === b) a++;
                 target = (a-b).toString(); 
                 currentQuestionDisplay = `${a} - ${b} = ?`;
             }
@@ -397,7 +407,6 @@
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
         
-        // 修正四捨五入顯示
         let finalScore = Math.round(score);
         document.getElementById('result-score').innerText = `${finalScore} 分達成！`;
         document.getElementById('result-stats').innerText = `總共練習 ${questionsSolved} 題，答對了 ${correctCount} 題`;
